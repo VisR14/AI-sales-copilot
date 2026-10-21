@@ -43,7 +43,7 @@ The real LLM adapter has not been live-validated just by running mock-mode tests
 
 ## Evaluation
 
-The test suite includes the five required scenarios, a missing-information case, a simulated API failure, and schema/input checks. Record expected vs actual outcomes and rerun affected tests after changes. Do not claim all production failure modes are covered.
+Expected versus actual results, pass/fail criteria, and the injection failure that was fixed are in [EVALUATION.md](EVALUATION.md). Those results are from the mock adapter (`OPENAI_API_KEY` unset). They do not validate live model behavior.
 
 ## Deployment (Render)
 

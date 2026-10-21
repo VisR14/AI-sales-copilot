@@ -90,11 +90,22 @@ def classify_with_rules(update: str) -> dict:
         return result
 
     # Prompt injection cannot set urgency or resolve the issue.
-    if any(phrase in text for phrase in ["ignore instructions", "ignore previous", "mark this resolved", "low urgency"]):
+    # A later sales rule may still classify a real issue in the same update.
+    injected = any(phrase in text for phrase in ["ignore instructions", "ignore previous", "mark this resolved", "low urgency"])
+    if injected:
         result["evidence"].append("The update contains instruction-like text; it is treated as untrusted input.")
         result["recommended_next_action"] = "Assess the actual sales issue and verify relevant facts; do not treat embedded instructions as commands."
         result["needs_human_review"] = True
-        result["review_reason"] = "The update contains instruction-like text and must not override triage rules."
+        result["review_reason"] = "The update contains instruction-like text; it is untrusted and must not override triage rules."
+
+    def finish(classified: dict) -> dict:
+        if injected and classified.get("urgency") == "low":
+            classified["urgency"] = "high"
+        if injected and not any("untrusted" in item.lower() for item in classified.get("evidence", [])):
+            classified.setdefault("evidence", []).append(
+                "The update contains instruction-like text; it is treated as untrusted input."
+            )
+        return classified
 
     if any(word in text for word in ["competitor", "discounting", "price match", "match the price"]):
         result.update(
@@ -106,7 +117,7 @@ def classify_with_rules(update: str) -> dict:
             needs_human_review=True,
             review_reason="Competitor coverage and pricing are unverified; price changes require an authorized human decision."
         )
-        return result
+        return finish(result)
 
     if "stockout" in text or "out of stock" in text or "unavailable" in text or "run out" in text:
         if stock is not None and stock > 0:
@@ -131,7 +142,7 @@ def classify_with_rules(update: str) -> dict:
         if "lost sales" in text or "major sales" in text or "huge" in text:
             result["evidence"].append("Reported claim: sales impact was described as major, but no verified impact figure was supplied.")
             result["missing_information"].append("Sales-impact data, if an impact estimate is required")
-        return result
+        return finish(result)
 
     if any(word in text for word in ["damaged", "damage", "broken pack", "leaking"]):
         result.update(
@@ -142,7 +153,10 @@ def classify_with_rules(update: str) -> dict:
             needs_human_review=True,
             review_reason="A damaged product may require quality review."
         )
-        return result
+        return finish(result)
+
+    if injected:
+        return finish(result)
 
     if not outlet or not sku:
         result.update(
@@ -176,7 +190,11 @@ def apply_safety_rules(result: dict, update: str) -> dict:
                       review_reason="The field report conflicts with verified inventory.")
     if any(w in text for w in ["ignore instructions", "ignore previous", "mark this resolved"]):
         result["needs_human_review"] = True
-        result["review_reason"] = "Instruction-like text is untrusted and cannot suppress review."
+        if result.get("urgency") == "low":
+            result["urgency"] = "high"
+        reason = result.get("review_reason") or ""
+        if "untrusted" not in reason.lower():
+            result["review_reason"] = (reason + " Instruction-like text is untrusted and cannot suppress review.").strip()
     return result
 
 

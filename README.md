@@ -64,3 +64,7 @@ The included in-memory rate limit is a basic single-process demo control; it res
 - No persistent audit database, authentication, or monitoring.
 - Evidence traceability is basic; a production version should attach source IDs/spans and validate quotes against source text.
 - This is a take-home prototype, not a production deployment.
+
+## AI-tool usage disclosure
+
+I used Cursor’s coding assistant to help write the API, the tests, the sample requests, and the evaluation notes, and to check the project against the brief. I ran the tests myself, read the pass and fail results, and rewrote the evaluation notes in my own words. I also checked the injection case before pushing. No API key is in the code or the repository.

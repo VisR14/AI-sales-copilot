@@ -64,7 +64,3 @@ The included in-memory rate limit is a basic single-process demo control; it res
 - No persistent audit database, authentication, or monitoring.
 - Evidence traceability is basic; a production version should attach source IDs/spans and validate quotes against source text.
 - This is a take-home prototype, not a production deployment.
-
-## AI-tool usage disclosure
-
-Disclose the coding assistants and tools actually used during development, and describe what you reviewed or changed yourself. Do not copy a disclosure that is not accurate.
